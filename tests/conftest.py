@@ -15,19 +15,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def mock_settings():
     """Settings mockeado para tests."""
     from src.config import Settings
-    from unittest.mock import patch
 
-    with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-key-12345"}):
-        settings = Settings(
-            openai_api_key="sk-test-key-12345",
-            llm_model_name="gpt-3.5-turbo",
-            llm_temperature=0.7,
-            vectorstore_path="./test_vectorstore",
-            chunk_size=500,
-            chunk_overlap=100,
-            retrieval_k=3,
-        )
-        yield settings
+    settings = Settings(
+        ollama_base_url="http://localhost:11434",
+        llm_model_name="qwen2.5:7b",
+        llm_temperature=0.1,
+        embedding_model_name="intfloat/multilingual-e5-small",
+        vectorstore_path="./test_vectorstore",
+        chunk_size=500,
+        chunk_overlap=100,
+        retrieval_k=3,
+    )
+    yield settings
 
 
 @pytest.fixture

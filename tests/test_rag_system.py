@@ -37,10 +37,10 @@ class TestRAGSystemInit:
     def test_init_creates_default_llm(
         self, mock_settings, mock_vector_store, mock_document_loader
     ):
-        """Test que crea un LLM por defecto si no se provee."""
-        with patch("src.rag_system.ChatOpenAI") as MockChatOpenAI:
+        """Test que crea un LLM por defecto (ChatOllama) si no se provee."""
+        with patch("src.rag_system.ChatOllama") as MockChatOllama:
             mock_llm_instance = MagicMock()
-            MockChatOpenAI.return_value = mock_llm_instance
+            MockChatOllama.return_value = mock_llm_instance
 
             rag = RAGSystem(
                 settings=mock_settings,
@@ -48,10 +48,10 @@ class TestRAGSystemInit:
                 document_loader=mock_document_loader,
             )
 
-            MockChatOpenAI.assert_called_once_with(
-                model_name=mock_settings.llm_model_name,
+            MockChatOllama.assert_called_once_with(
+                model=mock_settings.llm_model_name,
                 temperature=mock_settings.llm_temperature,
-                openai_api_key=mock_settings.openai_api_key,
+                base_url=mock_settings.ollama_base_url,
             )
 
     def test_vector_store_property(
@@ -227,7 +227,7 @@ class TestQuery:
             with patch("src.rag_system.RunnablePassthrough", return_value=mock_chain):
                 with patch("src.rag_system.ChatPromptTemplate") as mock_prompt_cls:
                     mock_prompt_cls.from_template.return_value = mock_chain
-                    rag._prompt_template = mock_chain
+                    rag._prompt = mock_chain
                     rag._llm = mock_chain
 
                     result = rag.query("Pregunta de test")
@@ -298,9 +298,9 @@ class TestDeleteIndex:
 
 
 class TestFormatContext:
-    """Tests para _format_context."""
+    """Tests para _format."""
 
-    def test_format_context(
+    def test_format(
         self,
         mock_settings,
         mock_vector_store,
@@ -316,11 +316,10 @@ class TestFormatContext:
             llm=mock_llm,
         )
 
-        context = rag._format_context(sample_documents)
+        context = rag._format(sample_documents)
 
-        assert "[Documento 1]" in context
-        assert "[Documento 2]" in context
-        assert "doc1.pdf" in context
+        assert "[Doc 1]" in context
+        assert "[Doc 2]" in context
         assert "Python" in context
 
 

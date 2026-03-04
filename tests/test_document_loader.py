@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 from langchain_core.documents import Document
 
-from src.document_loader import DocumentLoader, SUPPORTED_EXTENSIONS
+from src.document_loader import DocumentLoader, SUPPORTED
 from src.exceptions import (
     DocumentNotFoundError,
     UnsupportedFormatError,
@@ -32,11 +32,11 @@ class TestDocumentLoader:
 
     def test_supported_extensions(self):
         """Test que las extensiones soportadas son correctas."""
-        assert ".pdf" in SUPPORTED_EXTENSIONS
-        assert ".txt" in SUPPORTED_EXTENSIONS
-        assert ".docx" in SUPPORTED_EXTENSIONS
-        assert ".md" in SUPPORTED_EXTENSIONS
-        assert ".xlsx" not in SUPPORTED_EXTENSIONS
+        assert ".pdf" in SUPPORTED
+        assert ".txt" in SUPPORTED
+        assert ".docx" in SUPPORTED
+        assert ".md" in SUPPORTED
+        assert ".xlsx" not in SUPPORTED
 
 
 class TestLoadDocument:
@@ -77,10 +77,11 @@ class TestLoadDocument:
 
         loader = DocumentLoader()
 
-        with patch("src.document_loader._LOADERS") as mock_loaders:
+        with patch("src.document_loader.SUPPORTED") as mock_supported:
             mock_loader_instance = MagicMock()
             mock_loader_instance.load.side_effect = Exception("Loader error")
-            mock_loaders.__getitem__.return_value = lambda x: mock_loader_instance
+            mock_supported.__contains__ = lambda self, x: x == ".txt"
+            mock_supported.__getitem__ = lambda self, x: lambda p: mock_loader_instance
 
             with pytest.raises(DocumentLoadError):
                 loader.load_document(str(txt_file))
@@ -144,12 +145,12 @@ class TestLoadDirectory:
 
 
 class TestSplitDocuments:
-    """Tests para split_documents."""
+    """Tests para el splitter interno."""
 
     def test_split_documents_empty_list(self):
         """Test que maneja lista vacía."""
         loader = DocumentLoader()
-        chunks = loader.split_documents([])
+        chunks = loader.splitter.split_documents([])
         assert chunks == []
 
     def test_split_documents_creates_chunks(self):
@@ -158,7 +159,7 @@ class TestSplitDocuments:
         long_content = "Este es un contenido muy largo. " * 20
         documents = [Document(page_content=long_content, metadata={"source": "test"})]
 
-        chunks = loader.split_documents(documents)
+        chunks = loader.splitter.split_documents(documents)
 
         assert len(chunks) > 1
         for chunk in chunks:
